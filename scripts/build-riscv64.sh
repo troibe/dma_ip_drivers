@@ -21,6 +21,7 @@ mkdir -p "${output_dir}"
 
 make -C "${repo_root}/XDMA/linux-kernel/xdma" \
   BUILDSYSTEM_DIR="${kernel_build}" \
+  KBUILD_MODPOST_WARN=1 \
   all
 
 make -C "${repo_root}/XDMA/linux-kernel/tools" clean all
