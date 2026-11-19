@@ -33,7 +33,9 @@ jobs:
           fi
 
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential flex git libelf-dev libssl-dev
+          # git is already present on the Neo5 runner; installing it here can
+          # conflict with the runner image's Git PPA and git-man package.
+          sudo apt-get install -y bc bison build-essential flex libelf-dev libssl-dev
 
           kernel_source="${RUNNER_TEMP}/linux-${running_kernel}"
           base_version="${running_kernel%%-*}"
