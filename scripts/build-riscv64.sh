@@ -29,6 +29,15 @@ make -C "${repo_root}/XDMA/linux-kernel/tools" clean all
 cp "${repo_root}/XDMA/linux-kernel/xdma/xdma.ko" "${output_dir}/"
 cp "${repo_root}/XDMA/linux-kernel/tools/"{dma_from_device,dma_to_device,performance,reg_rw,test_chrdev} "${output_dir}/"
 
-modinfo "${output_dir}/xdma.ko" > "${output_dir}/xdma.modinfo.txt" || true
-file "${output_dir}"/* | tee "${output_dir}/file.txt"
-modinfo "${output_dir}/xdma.ko" | grep -E '^(name|vermagic|depends|alias):' || true
+if command -v modinfo >/dev/null 2>&1; then
+  modinfo "${output_dir}/xdma.ko" > "${output_dir}/xdma.modinfo.txt" || true
+  modinfo "${output_dir}/xdma.ko" | grep -E '^(name|vermagic|depends|alias):' || true
+else
+  printf '%s\n' 'modinfo not installed on runner' > "${output_dir}/xdma.modinfo.txt"
+fi
+
+if command -v file >/dev/null 2>&1; then
+  file "${output_dir}"/* | tee "${output_dir}/file.txt"
+else
+  printf '%s\n' 'file(1) not installed on runner' > "${output_dir}/file.txt"
+fi
