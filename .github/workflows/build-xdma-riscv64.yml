@@ -21,8 +21,36 @@ jobs:
           set -eux
           uname -a
           test "$(uname -m)" = riscv64
-          test -d "/lib/modules/$(uname -r)/build"
-          test -f "/lib/modules/$(uname -r)/build/.config"
+
+      - name: Prepare kernel build tree
+        run: |
+          set -euxo pipefail
+          running_kernel="$(uname -r)"
+          if [[ -d "/lib/modules/${running_kernel}/build" && \
+                -f "/lib/modules/${running_kernel}/build/.config" ]]; then
+            echo "KERNEL_BUILD=/lib/modules/${running_kernel}/build" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential flex git libelf-dev libssl-dev
+
+          kernel_source="${RUNNER_TEMP}/linux-${running_kernel}"
+          base_version="${running_kernel%%-*}"
+          git clone --depth 1 --branch "v${base_version}" \
+            https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git \
+            "${kernel_source}"
+
+          if [[ -r /proc/config.gz ]]; then
+            zcat /proc/config.gz > "${kernel_source}/.config"
+          elif [[ -r "/boot/config-${running_kernel}" ]]; then
+            cp "/boot/config-${running_kernel}" "${kernel_source}/.config"
+          else
+            make -C "${kernel_source}" ARCH=riscv defconfig
+          fi
+
+          make -C "${kernel_source}" ARCH=riscv olddefconfig modules_prepare
+          echo "KERNEL_BUILD=${kernel_source}" >> "${GITHUB_ENV}"
 
       - name: Build kernel module and tools
         run: |
