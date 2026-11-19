@@ -5,10 +5,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'XDMA/**'
-      - 'scripts/build-riscv64.sh'
-      - '.github/workflows/build-xdma-riscv64.yml'
 
 permissions:
   contents: read
