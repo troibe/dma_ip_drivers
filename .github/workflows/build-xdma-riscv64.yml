@@ -1,0 +1,50 @@
+name: Build XDMA for RISC-V
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'XDMA/**'
+      - 'scripts/build-riscv64.sh'
+      - '.github/workflows/build-xdma-riscv64.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-riscv64:
+    runs-on: neo5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show runner and kernel
+        run: |
+          set -eux
+          uname -a
+          test "$(uname -m)" = riscv64
+          test -d "/lib/modules/$(uname -r)/build"
+          test -f "/lib/modules/$(uname -r)/build/.config"
+
+      - name: Build kernel module and tools
+        run: |
+          chmod +x scripts/build-riscv64.sh
+          scripts/build-riscv64.sh
+
+      - name: Package build outputs
+        run: |
+          tar -C build -czf "xdma-riscv64-${GITHUB_SHA}.tar.gz" riscv64
+          sha256sum "xdma-riscv64-${GITHUB_SHA}.tar.gz"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xdma-riscv64-${{ github.sha }}
+          path: |
+            xdma-riscv64-${{ github.sha }}.tar.gz
+            build/riscv64/file.txt
+            build/riscv64/xdma.modinfo.txt
+          if-no-files-found: error
+          retention-days: 14
