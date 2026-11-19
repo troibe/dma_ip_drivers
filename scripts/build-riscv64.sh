@@ -5,6 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 kernel_release="${KERNELRELEASE:-$(uname -r)}"
 kernel_build="${KERNEL_BUILD:-/lib/modules/${kernel_release}/build}"
 output_dir="${OUTPUT_DIR:-${repo_root}/build/riscv64}"
+kernel_localversion="${KERNEL_LOCALVERSION:-}"
 
 if [[ "$(uname -m)" != "riscv64" ]]; then
   echo "This script is intended to run natively on riscv64; got $(uname -m)." >&2
@@ -21,6 +22,7 @@ mkdir -p "${output_dir}"
 
 make -C "${repo_root}/XDMA/linux-kernel/xdma" \
   BUILDSYSTEM_DIR="${kernel_build}" \
+  LOCALVERSION="${kernel_localversion}" \
   KBUILD_MODPOST_WARN=1 \
   all
 

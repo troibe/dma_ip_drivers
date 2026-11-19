@@ -26,6 +26,9 @@ jobs:
         run: |
           set -euxo pipefail
           running_kernel="$(uname -r)"
+          base_version="${running_kernel%%-*}"
+          kernel_localversion="${running_kernel#${base_version}}"
+          echo "KERNEL_LOCALVERSION=${kernel_localversion}" >> "${GITHUB_ENV}"
           if [[ -d "/lib/modules/${running_kernel}/build" && \
                 -f "/lib/modules/${running_kernel}/build/.config" ]]; then
             echo "KERNEL_BUILD=/lib/modules/${running_kernel}/build" >> "${GITHUB_ENV}"
@@ -38,7 +41,6 @@ jobs:
           sudo apt-get install -y bc bison build-essential flex libelf-dev libssl-dev
 
           kernel_source="${RUNNER_TEMP}/linux-${running_kernel}"
-          base_version="${running_kernel%%-*}"
           git clone --depth 1 --branch "v${base_version}" \
             https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git \
             "${kernel_source}"
@@ -51,7 +53,9 @@ jobs:
             make -C "${kernel_source}" ARCH=riscv defconfig
           fi
 
-          make -C "${kernel_source}" ARCH=riscv olddefconfig modules_prepare
+          make -C "${kernel_source}" ARCH=riscv \
+            LOCALVERSION="${kernel_localversion}" \
+            olddefconfig modules_prepare
           echo "KERNEL_BUILD=${kernel_source}" >> "${GITHUB_ENV}"
 
       - name: Build kernel module and tools
